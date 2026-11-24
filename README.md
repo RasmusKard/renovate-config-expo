@@ -17,3 +17,11 @@ Renovate presets that keep the packages Expo manages at the versions your Expo S
 - Pin the release commit. Get its SHA with `git ls-remote https://github.com/RasmusKard/renovate-config-expo refs/tags/v1.0.0`.
 - Keep the `// v1.0.0` comment. Renovate uses it to update the SHA and the version in one PR.
 - A PR that changes the SHA but not the version means the tag moved. Don't merge it.
+
+## Monorepos
+
+Use `scoped` with a glob to limit the preset to your Expo app's package files:
+
+```jsonc
+"github>RasmusKard/renovate-config-expo//sdk-58/scoped#<SHA>(apps/mobile/**)" // v1.0.0
+```
