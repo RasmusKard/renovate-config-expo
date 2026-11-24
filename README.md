@@ -62,3 +62,5 @@ node --test
 node generate.mjs   # rewrites sdk-<N>/ from Expo's API
 ./publish.sh        # tags HEAD with the next vX.Y.Z if any sdk-<N>/ changed, locally
 ```
+
+The [update workflow](.github/workflows/update.yml) runs these daily and pushes the result.
