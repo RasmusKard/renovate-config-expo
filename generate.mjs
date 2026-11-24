@@ -38,6 +38,16 @@ export async function fetchSdkPackages() {
   );
 }
 
+const presetPinManager = {
+  customType: 'regex',
+  managerFilePatterns: [String.raw`/(^|/)(renovate\.json5?|\.renovaterc(\.json5?)?)$/`],
+  matchStrings: [
+    String.raw`["']github>RasmusKard/renovate-config-expo//sdk-\d+/(default|scoped)#(?<currentDigest>[0-9a-f]{40})(\([^"'\n]*\))?["'],?[ \t]*//[ \t]*(?<currentValue>v\d+\.\d+\.\d+)`,
+  ],
+  depNameTemplate: 'RasmusKard/renovate-config-expo',
+  datasourceTemplate: 'github-tags',
+};
+
 const releasesTransform = (statements, expoRange) =>
   `( ${[...statements, `$r := ${expoRange};`].join(' ')} $r ? {"releases": [` +
   `{"version": $replace('{{currentValue}}', /^[~^v]+/, '')}, ` +
@@ -82,6 +92,7 @@ export function presetFiles(sdkMajor, { sdkVersion, versionsEndpointPackages, na
         description,
         customDatasources,
         packageRules,
+        customManagers: [presetPinManager],
       },
       null,
       2,

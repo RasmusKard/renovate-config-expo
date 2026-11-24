@@ -166,5 +166,18 @@
       "overrideDatasource": "custom.expo-sdk-53-versions",
       "groupName": "Expo SDK 53"
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)(renovate\\.json5?|\\.renovaterc(\\.json5?)?)$/"
+      ],
+      "matchStrings": [
+        "[\"']github>RasmusKard/renovate-config-expo//sdk-\\d+/(default|scoped)#(?<currentDigest>[0-9a-f]{40})(\\([^\"'\\n]*\\))?[\"'],?[ \\t]*//[ \\t]*(?<currentValue>v\\d+\\.\\d+\\.\\d+)"
+      ],
+      "depNameTemplate": "RasmusKard/renovate-config-expo",
+      "datasourceTemplate": "github-tags"
+    }
   ]
 }

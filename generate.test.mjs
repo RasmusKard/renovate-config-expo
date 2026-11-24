@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { presetFiles } from './generate.mjs';
@@ -42,8 +43,44 @@ test('the scoped preset limits the same rules to the files in its argument', () 
   assert.deepEqual(Object.keys(files).sort(), ['default.json', 'scoped.json']);
   const scoped = JSON.parse(files['scoped.json']);
   assert.deepEqual(scoped.customDatasources, preset.customDatasources);
+  assert.deepEqual(scoped.customManagers, preset.customManagers);
   assert.deepEqual(
     scoped.packageRules,
     preset.packageRules.map((rule) => ({ ...rule, matchFileNames: ['{{args}}'] })),
   );
+});
+
+test('the pin manager reads Renovate config files only', () => {
+  const [{ managerFilePatterns }] = preset.customManagers;
+  const fileRegex = new RegExp(managerFilePatterns[0].slice(1, -1));
+  for (const file of ['renovate.json', 'renovate.json5', '.renovaterc', '.renovaterc.json', '.github/renovate.json5', '.gitlab/.renovaterc.json']) {
+    assert.match(file, fileRegex);
+  }
+  for (const file of ['package.json', 'renovate.json.bak', 'apps/x-renovate.json']) {
+    assert.doesNotMatch(file, fileRegex);
+  }
+});
+
+test('the pin manager reads the SHA and version from the README usage lines', () => {
+  const [{ matchStrings, depNameTemplate, datasourceTemplate }] = preset.customManagers;
+  assert.equal(depNameTemplate, 'RasmusKard/renovate-config-expo');
+  assert.equal(datasourceTemplate, 'github-tags');
+  const sha = '0123456789abcdef0123456789abcdef01234567';
+  const readmeLines = readFileSync(new URL('README.md', import.meta.url), 'utf8')
+    .split('\n')
+    .filter((line) => line.includes('#<SHA>'))
+    .map((line) => line.replace('<SHA>', sha));
+  assert.deepEqual(
+    readmeLines.map((line) => line.match(/sdk-\d+\/(\w+)/)[1]),
+    ['default', 'scoped'],
+  );
+  const json5Lines = readmeLines.map((line) => line.replaceAll('"', "'").replace("' //", "', //"));
+  assert.ok(json5Lines.every((line) => line.includes("', // v1.0.0")));
+  for (const line of [...readmeLines, ...json5Lines]) {
+    const { currentDigest, currentValue } = line.match(new RegExp(matchStrings[0])).groups;
+    assert.deepEqual({ currentDigest, currentValue }, { currentDigest: sha, currentValue: 'v1.0.0' }, line);
+  }
+  for (const line of readmeLines) {
+    assert.doesNotMatch(line.replace(/\s*\/\/ v1\.0\.0$/, ''), new RegExp(matchStrings[0]));
+  }
 });
