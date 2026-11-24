@@ -24,7 +24,8 @@ test('presetFiles routes each package through exactly one rule in one group', ()
   for (const rule of preset.packageRules) {
     assert.deepEqual(rule.matchDatasources, ['npm']);
     assert.equal(rule.groupName, 'Expo SDK 54');
-    assert.ok(rule.overrideDatasource.replace(/^custom\./, '') in preset.customDatasources);
+    const datasource = preset.customDatasources[rule.overrideDatasource.replace(/^custom\./, '')];
+    assert.deepEqual(rule.registryUrls, [datasource.defaultRegistryUrlTemplate]);
     for (const name of rule.matchPackageNames) {
       assert.ok(!(name in datasourceByName), `${name} is in more than one rule`);
       datasourceByName[name] = rule.overrideDatasource;

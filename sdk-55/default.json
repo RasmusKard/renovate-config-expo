@@ -139,6 +139,9 @@
         "unimodules-image-loader-interface"
       ],
       "overrideDatasource": "custom.expo-sdk-55-native-modules",
+      "registryUrls": [
+        "https://api.expo.dev/v2/sdks/55.0.0/native-modules"
+      ],
       "groupName": "Expo SDK 55"
     },
     {
@@ -166,6 +169,9 @@
         "typescript"
       ],
       "overrideDatasource": "custom.expo-sdk-55-versions",
+      "registryUrls": [
+        "https://api.expo.dev/v2/versions/latest"
+      ],
       "groupName": "Expo SDK 55"
     }
   ],

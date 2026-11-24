@@ -83,6 +83,7 @@ export function presetFiles(sdkMajor, { sdkVersion, versionsEndpointPackages, na
     matchDatasources: ['npm'],
     matchPackageNames: packageNames,
     overrideDatasource: `custom.${source}`,
+    registryUrls: [customDatasources[source].defaultRegistryUrlTemplate],
     groupName: `Expo SDK ${sdkMajor}`,
   }));
   const renovatePreset = (description, packageRules) =>
