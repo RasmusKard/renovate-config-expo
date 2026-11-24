@@ -1,6 +1,13 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 
 const EXPO_API = 'https://api.expo.dev/v2';
+const SDK_VERSION = /^\d+\.\d+\.\d+$/;
+const NPM_PACKAGE_NAME = /^(@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*$/;
+
+function expected(pattern, value) {
+  if (!pattern.test(value)) throw new Error(`Unexpected value from the Expo API: ${JSON.stringify(value)}`);
+  return value;
+}
 
 async function fetchExpoApi(path) {
   const response = await fetch(`${EXPO_API}${path}`);
@@ -16,14 +23,15 @@ export async function fetchSdkPackages() {
   return new Map(
     await Promise.all(
       supportedSdks.map(async ([sdkVersion, sdkInfo]) => {
+        expected(SDK_VERSION, sdkVersion);
         const versionsEndpointPackages = new Set([
-          ...Object.keys(sdkInfo.relatedPackages ?? {}),
+          ...Object.keys(sdkInfo.relatedPackages ?? {}).map((name) => expected(NPM_PACKAGE_NAME, name)),
           ...(sdkInfo.facebookReactVersion ? ['react', 'react-dom'] : []),
           'react-native',
           'expo',
         ]);
         const nativeModulesEndpointPackages = (await fetchExpoApi(`/sdks/${sdkVersion}/native-modules`))
-          .map(({ npmPackage }) => npmPackage)
+          .map(({ npmPackage }) => expected(NPM_PACKAGE_NAME, npmPackage))
           .filter((name) => !versionsEndpointPackages.has(name));
         return [
           Number.parseInt(sdkVersion, 10),

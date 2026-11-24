@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { presetFiles } from './generate.mjs';
+import { fetchSdkPackages, presetFiles } from './generate.mjs';
 
 const files = presetFiles(54, {
   sdkVersion: '54.0.0',
@@ -83,4 +83,32 @@ test('the pin manager reads the SHA and version from the README usage lines', ()
   for (const line of readmeLines) {
     assert.doesNotMatch(line.replace(/\s*\/\/ v1\.0\.0$/, ''), new RegExp(matchStrings[0]));
   }
+});
+
+const stubExpoApi = (t, { sdkVersion = '58.0.0', relatedPackages = {}, nativeModules = [] }) =>
+  t.mock.method(globalThis, 'fetch', async (url) => ({
+    ok: true,
+    json: async () => ({
+      data: url.endsWith('/versions/latest')
+        ? { sdkVersions: { [sdkVersion]: { expoVersion: '~58.0.0', facebookReactNativeVersion: '0.88.0', relatedPackages } } }
+        : nativeModules.map((npmPackage) => ({ npmPackage, versionRange: '~1.0.0' })),
+    }),
+  }));
+
+test('fetchSdkPackages accepts the package names Expo publishes', async (t) => {
+  stubExpoApi(t, { relatedPackages: { '@types/react': '~19.0.0' }, nativeModules: ['expo-camera', '@react-native-community/netinfo'] });
+  const { nativeModulesEndpointPackages, versionsEndpointPackages } = (await fetchSdkPackages()).get(58);
+  assert.deepEqual(nativeModulesEndpointPackages, ['@react-native-community/netinfo', 'expo-camera']);
+  assert.ok(versionsEndpointPackages.includes('@types/react'));
+});
+
+test('fetchSdkPackages rejects names and SDK versions that are not plain npm names and versions', async (t) => {
+  for (const nativeModules of [['*'], ['/.*/'], ['!expo-camera'], ['Expo-Camera']]) {
+    stubExpoApi(t, { nativeModules });
+    await assert.rejects(fetchSdkPackages(), /Unexpected value from the Expo API/);
+  }
+  stubExpoApi(t, { relatedPackages: { '*': '1.0.0' } });
+  await assert.rejects(fetchSdkPackages(), /Unexpected value from the Expo API/);
+  stubExpoApi(t, { sdkVersion: '58.0.0/../evil' });
+  await assert.rejects(fetchSdkPackages(), /Unexpected value from the Expo API/);
 });
