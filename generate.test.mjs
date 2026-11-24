@@ -66,14 +66,13 @@ test('the pin manager reads the SHA and version from the README usage lines', ()
   assert.equal(depNameTemplate, 'RasmusKard/renovate-config-expo');
   assert.equal(datasourceTemplate, 'github-tags');
   const sha = '0123456789abcdef0123456789abcdef01234567';
-  const readmeLines = readFileSync(new URL('README.md', import.meta.url), 'utf8')
+  const [defaultLine] = readFileSync(new URL('README.md', import.meta.url), 'utf8')
     .split('\n')
     .filter((line) => line.includes('#<SHA>'))
     .map((line) => line.replace('<SHA>', sha));
-  assert.deepEqual(
-    readmeLines.map((line) => line.match(/sdk-\d+\/(\w+)/)[1]),
-    ['default', 'scoped'],
-  );
+  const scopedLine = defaultLine.replace(`/default#${sha}`, `/scoped#${sha}(apps/mobile/**)`);
+  assert.notEqual(scopedLine, defaultLine);
+  const readmeLines = [defaultLine, scopedLine];
   const json5Lines = readmeLines.map((line) => line.replaceAll('"', "'").replace("' //", "', //"));
   assert.ok(json5Lines.every((line) => line.includes("', // v1.0.0")));
   for (const line of [...readmeLines, ...json5Lines]) {
