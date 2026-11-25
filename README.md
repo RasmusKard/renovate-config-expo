@@ -24,3 +24,14 @@ Use `scoped` with a glob to limit the preset to your Expo app's package files:
 ```jsonc
 "github>RasmusKard/renovate-config-expo//sdk-58/scoped#<SHA>(apps/mobile/**)" // v1.0.0
 ```
+
+## Vendoring
+
+To copy a preset into your repo instead, drop its `customManagers`, which only update the `github>` pin:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/RasmusKard/renovate-config-expo/v1.0.0/sdk-58/default.json | jq 'del(.customManagers)' > renovate-expo-sdk-58.json
+```
+
+- Versions still come from `api.expo.dev`, but the package list is frozen. Renovate proposes npm's `latest` for packages Expo adds later, and stops updating ones Expo removes.
+- Copy the new SDK's file when you upgrade Expo.
